@@ -12,11 +12,14 @@ class state(object):
     def __init__(self):
         self.state = state.g_state
         state.g_state += 1
-        self.transitions = {}
+        self.transitions = []
         self.accept = False
     
+    def __repr__(self):
+        return str(self.state)
+    
     def transition_to(self, symbol, next_state):
-        self.transitions[symbol] = next_state
+        self.transitions.append((symbol,next_state))
 
 def alpha(c):
     return not (c in operators)
@@ -28,6 +31,7 @@ class regex(object):
         self.regex = list(regex)
         self.preprocess()
         self.nfa_table = None
+        self.input = []
         
     def preprocess(self):
         regex = []
@@ -58,7 +62,10 @@ class regex(object):
         s0.transition_to(symbol, s1)
         
         self.operand_stack.append([s0, s1])
-        print symbol
+        
+        if symbol not in self.input:
+            self.input.append(symbol)
+        #print symbol
     
     def pop(self):
         """
@@ -70,7 +77,7 @@ class regex(object):
         """
         Takes in the map and applies the intended operation on the current operand stack
         """
-        print(operators[op])
+        #print(operators[op])
         operation = getattr(self, operators[op])
         operation()
         
@@ -194,6 +201,3 @@ class regex(object):
         
         return self.nfa_table
         
-re = regex("(abc)*(d|ef)*")
-nfa = re.nfa()
-print nfa
