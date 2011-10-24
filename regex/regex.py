@@ -15,9 +15,6 @@ class state(object):
         self.transitions = {}
         self.accept = False
     
-    def __repr__(self):
-        return str(self.transitions)
-    
     def transition_to(self, symbol, next_state):
         self.transitions[symbol] = next_state
 
@@ -70,9 +67,82 @@ class regex(object):
         return self.operand_stack.pop()
     
     def eval(self, op):
+        """
+        Takes in the map and applies the intended operation on the current operand stack
+        """
         print(operators[op])
+        operation = getattr(self, operators[op])
+        operation()
         
+    def concat(self):
+        """
+        b(top) = [3] - [...] -> [4]
+        a = [1'] - [...] -> [2']
+        
+        a concat b ->
+        [1'] -> [2'] -(epsilon)-> [3] -> [4]
+        """
+        b, a = self.pop(), self.pop()
+        a[-1].transition_to('\x00',b[0]) # epsilon transition
+        for x in b:
+            a.append(x)
+        self.operand_stack.append(a)
     
+    def star(self):
+        """
+        if a = [1] -...-> [2]
+        then
+        
+        a star ->
+                     +----(e)---+
+                     v          ^
+        [0'] -(e)-> [1] -...-> [2] -(e)-> [3']
+         v                                 ^
+         +---------------(e)---------------|
+        """
+        a = self.pop()
+        start, end = state(), state()
+        
+        # directly to the end state
+        start.transition_to('\x00', end)
+        
+        # start to the first state in a
+        start.transition_to('\x00', a[0])
+        
+        # end of a to end
+        a[-1].transition_to('\x00', end)
+        
+        # end of a to start of a
+        a[-1].transition_to('\x00', a[0])
+        
+        a.insert(0, start)
+        a.append(end)
+        
+        self.operand_stack.append(a)
+    
+    def union(self):
+        """
+        b(top) = [3] - [...] -> [4]
+        a = [1] - [...] -> [2]
+        
+        then
+        a|b ->
+             +--(e)--> [1]->[2] --(e)-+
+        [0'] +                        + --> [5']
+             +--(e)--> [3]->[4] --(e)-+
+        """
+        b, a = self.pop(), self.pop()
+        
+        start, end = state(), state()
+        
+        start.transition_to('\x00', a[0])
+        start.transition_to('\x00', b[0])
+        a[-1].transition_to('\x00', end)
+        b[-1].transition_to('\x00', end)
+        
+        # push(start a b end)
+        self.operand_stack.append([start]+a+b+[end])
+        
     @classmethod
     def prec(cls, left, right):
         if left == right:
@@ -92,7 +162,8 @@ class regex(object):
     
     def nfa(self):
         """
-        Takes in 
+        Transforms a regular expression into an RPN representation and apply the
+        transformations from each operation on the operand stack
         """
         for c in self.regex:
             if alpha(c):
@@ -121,5 +192,8 @@ class regex(object):
         self.nfa_table = self.pop()
         self.nfa_table[-1].accept = True
         
-re = regex("abc*(d|ef)*")
-re.nfa()
+        return self.nfa_table
+        
+re = regex("(abc)*(d|ef)*")
+nfa = re.nfa()
+print nfa
