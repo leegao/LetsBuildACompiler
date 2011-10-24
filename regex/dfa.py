@@ -67,22 +67,3 @@ class dfa(object):
                     
             j+= 1
         return trans, final
-    
-from regex import regex
-
-re = regex("ab*c")
-nfa = re.nfa()
-
-d,f = dfa.dfa(nfa[0], re.input)
-
-def follow(nfa, state, s):
-    if not s:
-        return state
-    s = list(s)
-    a = s.pop(0)
-    next_state = nfa[(state, a)]
-    if not next_state:
-        return 0
-    return follow(nfa, next_state, s)
-    
-print follow(d, 1, "abbbbbc"), f
