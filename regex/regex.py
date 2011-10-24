@@ -66,7 +66,7 @@ class regex(object):
         """
         return self.operand_stack.pop()
     
-    def eval(self, op):
+    def apply(self, op):
         """
         Takes in the map and applies the intended operation on the current operand stack
         """
@@ -177,17 +177,17 @@ class regex(object):
                 # evaluate everything until we encounter (
                 prev = self.operator_stack.pop()
                 while not (prev == "("):
-                    self.eval(prev)
+                    self.apply(prev)
                     prev = self.operator_stack.pop()
             else:
                 # any operator: evaluate the entire stack
                 while self.operator_stack and regex.prec(c, self.operator_stack[-1]):
                     prev = self.operator_stack.pop()
-                    self.eval(prev)
+                    self.apply(prev)
                 self.operator_stack.append(c)
         # loop through the rest of the operator stack and evaluate them
         while self.operator_stack:
-            self.eval(self.operator_stack.pop())
+            self.apply(self.operator_stack.pop())
         
         self.nfa_table = self.pop()
         self.nfa_table[-1].accept = True
