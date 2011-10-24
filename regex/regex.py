@@ -9,9 +9,12 @@ operators = {"|":"union", "*":"star", "\x08":"concat", "(":"nothing", ")":"nothi
 
 class state(object):
     g_state = 0
-    def __init__(self):
-        self.state = state.g_state
-        state.g_state += 1
+    def __init__(self, st = 0):
+        if not st:
+            self.state = state.g_state
+            state.g_state += 1
+        else:
+            self.state = st
         self.transitions = []
         self.accept = False
     

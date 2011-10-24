@@ -10,25 +10,79 @@ class dfa(object):
     
     @classmethod
     @memoize
-    def edge(cls, state):
-        return [trans[1] for trans in state.transitions if trans[0] == '\x00']
+    def edge(cls, state, symb='\x00'):
+        l = [trans[1] for trans in state.transitions if trans[0] == symb] 
+        return l
+
     
     @classmethod
-    def closure(cls, state):
-        edges = dfa.edge(state)
-        last = 0
-        while last != len(edges):
-            last = len(edges)
-            for s in edges:
-                edges += dfa.edge(s)
-            edges = list(set(edges))
-        return edges
-            
-                
+    @memoize
+    def closure(cls, states):
+        def _closure(state):
+            edges = dfa.edge(state)
+            last = 0
+            while last != len(edges):
+                last = len(edges)
+                for s in edges:
+                    edges += dfa.edge(s)
+                edges = list(set(edges))
+            return edges
+        edges = list(states)
+        for state in states:
+            edges += _closure(state)
+        return list(set(edges))
+    
+    @classmethod
+    def combine(cls, d, symbol):
+        states = []
+        for state in d:
+            states += dfa.edge(state, symbol)
+        return dfa.closure(states)
+    
+    @classmethod
+    def is_final(cls, states):
+        for state in states:
+            if state.accept:
+                return True
+        return False
+    
+    @classmethod
+    def dfa(cls, s1, input):
+        states = [[], dfa.closure([s1])]
+        trans = {}
+        final = []
+        p = 1
+        j = 0
+        while j <= p:
+            for c in input:
+                e = dfa.combine(states[j], c)
+                if e in states:
+                    trans[(j,c)] = states.index(e)
+                else:
+                    p += 1
+                    states.append(e)
+                    if dfa.is_final(e):
+                        final.append(p)
+                    trans[(j,c)] = p
+                    
+            j+= 1
+        return trans, final
+    
 from regex import regex
 
 re = regex("ab*c")
 nfa = re.nfa()
-print nfa
-for s in nfa:
-    print s, dfa.closure(s)
+
+d,f = dfa.dfa(nfa[0], re.input)
+
+def follow(nfa, state, s):
+    if not s:
+        return state
+    s = list(s)
+    a = s.pop(0)
+    next_state = nfa[(state, a)]
+    if not next_state:
+        return 0
+    return follow(nfa, next_state, s)
+    
+print follow(d, 1, "abbbbbc"), f
