@@ -3,38 +3,69 @@
 # . (concat \x08)
 # | (union)
 # * (kleene closure/0 or more repetition)
-# union can be right associative, so we look ahead until we encounter | or ) to break
+# nfa builds up a non-deterministic finite automaton corresponding to the input regex
 
 operators = {"|":"union", "*":"star", "\x08":"concat", "(":"nothing", ")":"nothing"}
 
 def alpha(c):
+    # 
     return not (c in operators)
 
 class nfa(object):
+    """
+    Representation:
+    The regular expression ab*c will produce the following automaton:
+
+                                    +--(ep)--+
+                                    v        ^
+                           +-(ep)->[2]-(b)->[3]+
+    [0]-(a)->[1]-(ep)->[4] +                   +-(ep)->[5]-(ep)->[6]-(c)->[[7]]
+                           +--------(ep)-------+
+
+    Since the states themselves do not matter, we can discard them and represent
+    our automaton as a list of transitions along with a starting and a final state
+
+    nfa.trans is a dictionary that takes in a tuple (s, c) s being the integer
+        corresponding to the current state and c being the transition symbol,
+        and returns a list of possible states that the automaton could be in.
+
+    more concretely, the following dictionary corresponds to the above graph
+
+    { (0, 'a'):     [1],
+      (1, epsilon): [4],
+      (2, 'b'):     [3],
+      (3, epsilon): [5, 2],
+      (4, epsilon): [5, 2],
+      (5, epsilon): [6],
+      (6, 'c'):     [7]}
+    """
     def __init__(self, regex):
         self.operand_stack = []
         self.operator_stack = []
+        
         self.regex = list(regex)
         self.preprocess()
-        self.nfa_table = None
+        
         self.input = []
         self.states = 0
         self.trans = {}
         self.accept = 0
 
     def state(self):
+        # returns a unique integer for each state
         s = self.states
         self.states += 1
         return s
 
     def transition(self, a, symbol, b):
+        # adds the tuple (state a, symbol) into the dict and points it to b
         if (a,symbol) not in self.trans:
             self.trans[(a,symbol)] = []
         self.trans[(a,symbol)].append(b)
         
     def preprocess(self):
         regex = []
-        #second pass: add concat between
+        # add concat between the following
         # ab, a( , )a , *a , *( , )(
         for i,c in enumerate(self.regex):
             # get lookahead
@@ -64,7 +95,6 @@ class nfa(object):
         
         if symbol not in self.input:
             self.input.append(symbol)
-        #print symbol
     
     def pop(self):
         """
@@ -76,7 +106,6 @@ class nfa(object):
         """
         Takes in the map and applies the intended operation on the current operand stack
         """
-        #print(operators[op])
         operation = getattr(self, operators[op])
         operation()
         
@@ -198,7 +227,9 @@ class nfa(object):
         nfa_table = self.pop()
         self.accept = nfa_table[-1]
         
-        return self.trans, self.accept, nfa_table[0]
+        return self.trans, nfa_table[0], self.accept
         
 if __name__ == "__main__":
+    from pprint import pprint
     fa = nfa("ab*c")
+    pprint(fa.nfa())
