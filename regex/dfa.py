@@ -124,5 +124,5 @@ class dfa(object):
 if __name__ == "__main__":
     from nfa import nfa
     n = nfa("ab*c")
-    trans, accept, start = n.nfa()
+    trans, start, accept = n.nfa()
     d = dfa(trans, start, accept)
