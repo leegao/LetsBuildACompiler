@@ -7,23 +7,6 @@
 
 operators = {"|":"union", "*":"star", "\x08":"concat", "(":"nothing", ")":"nothing"}
 
-class state(object):
-    g_state = 0
-    def __init__(self, st = 0):
-        if not st:
-            self.state = state.g_state
-            state.g_state += 1
-        else:
-            self.state = st
-        self.transitions = []
-        self.accept = False
-    
-    def __repr__(self):
-        return str(self.state)
-    
-    def transition_to(self, symbol, next_state):
-        self.transitions.append((symbol,next_state))
-
 def alpha(c):
     return not (c in operators)
 
@@ -35,6 +18,19 @@ class nfa(object):
         self.preprocess()
         self.nfa_table = None
         self.input = []
+        self.states = 0
+        self.trans = {}
+        self.accept = 0
+
+    def state(self):
+        s = self.states
+        self.states += 1
+        return s
+
+    def transition(self, a, symbol, b):
+        if (a,symbol) not in self.trans:
+            self.trans[(a,symbol)] = []
+        self.trans[(a,symbol)].append(b)
         
     def preprocess(self):
         regex = []
@@ -61,8 +57,8 @@ class nfa(object):
         Pushing a symbol is equivalent to
         [s0] --(symbol)--> [s1]
         """
-        s0, s1 = state(), state()
-        s0.transition_to(symbol, s1)
+        s0, s1 = self.state(), self.state()
+        self.transition(s0, symbol, s1)
         
         self.operand_stack.append([s0, s1])
         
@@ -93,7 +89,7 @@ class nfa(object):
         [1'] -> [2'] -(epsilon)-> [3] -> [4]
         """
         b, a = self.pop(), self.pop()
-        a[-1].transition_to('\x00',b[0]) # epsilon transition
+        self.transition(a[-1], '\x00',b[0]) # epsilon transition
         for x in b:
             a.append(x)
         self.operand_stack.append(a)
@@ -111,19 +107,19 @@ class nfa(object):
          +---------------(e)---------------|
         """
         a = self.pop()
-        start, end = state(), state()
+        start, end = self.state(), self.state()
         
         # directly to the end state
-        start.transition_to('\x00', end)
+        self.transition(start, '\x00', end)
         
         # start to the first state in a
-        start.transition_to('\x00', a[0])
+        self.transition(start, '\x00', a[0])
         
         # end of a to end
-        a[-1].transition_to('\x00', end)
+        self.transition(a[-1], '\x00', end)
         
         # end of a to start of a
-        a[-1].transition_to('\x00', a[0])
+        self.transition(a[-1], '\x00', a[0])
         
         a.insert(0, start)
         a.append(end)
@@ -143,12 +139,12 @@ class nfa(object):
         """
         b, a = self.pop(), self.pop()
         
-        start, end = state(), state()
+        start, end = self.state(), self.state()
         
-        start.transition_to('\x00', a[0])
-        start.transition_to('\x00', b[0])
-        a[-1].transition_to('\x00', end)
-        b[-1].transition_to('\x00', end)
+        self.transition(start, '\x00', a[0])
+        self.transition(start, '\x00', b[0])
+        self.transition(a[-1], '\x00', end)
+        self.transition(b[-1], '\x00', end)
         
         # push(start a b end)
         self.operand_stack.append([start]+a+b+[end])
@@ -199,8 +195,10 @@ class nfa(object):
         while self.operator_stack:
             self.apply(self.operator_stack.pop())
         
-        self.nfa_table = self.pop()
-        self.nfa_table[-1].accept = True
+        nfa_table = self.pop()
+        self.accept = nfa_table[-1]
         
-        return self.nfa_table
+        return self.trans, self.accept, nfa_table[0]
         
+if __name__ == "__main__":
+    fa = nfa("ab*c")
