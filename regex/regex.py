@@ -5,7 +5,7 @@ class regex(object):
     def __init__(self, regex):
         self.regex = regex
         fs = nfa(regex)
-        trans, final, start = fs.nfa()
+        trans, start, final = fs.nfa()
         d = dfa(trans, start, final)
         self.dfa, self.final = d.dfa(fs.input)
     
