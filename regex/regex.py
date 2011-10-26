@@ -5,7 +5,9 @@ class regex(object):
     def __init__(self, regex):
         self.regex = regex
         fs = nfa(regex)
-        self.dfa, self.final = dfa.dfa(fs.nfa()[0], fs.input)
+        trans, final, start = fs.nfa()
+        d = dfa(trans, start, final)
+        self.dfa, self.final = d.dfa(fs.input)
     
     def match(self, s):
         def follow(dfa, state, s):
