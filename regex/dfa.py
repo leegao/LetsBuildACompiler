@@ -26,7 +26,7 @@ class dfa(object):
                 l += self.nfa[trans]
         return l 
 
-    @memoize
+    
     def closure(self, states):
         """
         Closure calculates the epsilon closures of a set of states.
@@ -37,6 +37,7 @@ class dfa(object):
         of states is equivalent to the union of the closures of the individual
         states. Closure(S1) U Closure(S2) U ... U Closure(Sn)
         """
+        @memoize
         def _closure(state):
             """
             A helper function that calculates the epsilon closure of
