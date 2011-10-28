@@ -7,25 +7,22 @@ class dfa(object):
     let edge(s, epsilon) be the set of all states reachable by s with an epsilon transition, then
     For a set of states S(nfa_table), closure(S) = S U (union(for s in closure(S), edge(s, epsilon)))
     """
-
+    
     def __init__(self, nfa, start, final):
         self.nfa = nfa
         self.start = start
         self.nfa_accept = final
+        self.edges = {}
     
-    @memoize
     def edge(self, state, symb='\x00'):
         """
         The edge function looks through the list of possible transitions
         from an NFA state and returns a set of states that can be reached
         via symbol
         """
-        l = []
-        for trans in self.nfa:
-            if trans[0] == state and trans[1] ==symb:
-                l += self.nfa[trans]
-        return l 
-
+        if (state, symb) in self.nfa:
+            return list(self.nfa[(state, symb)])
+        return []
     
     def closure(self, states):
         """
@@ -48,12 +45,17 @@ class dfa(object):
             between two iterations no longer changes.
             """
             edges = self.edge(state)
-            last = 0
-            while last != len(edges):
-                last = len(edges)
+            while True:
+                go_on = False
                 for s in edges:
-                    edges += self.edge(s)
-                edges = list(set(edges))
+                    new_edges = self.edge(s)
+                    for e in new_edges:
+                        if e in edges:
+                            pass
+                        else:
+                            edges.append(e)
+                            go_on = True
+                if not go_on: break
             return edges
         
         edges = list(states)
