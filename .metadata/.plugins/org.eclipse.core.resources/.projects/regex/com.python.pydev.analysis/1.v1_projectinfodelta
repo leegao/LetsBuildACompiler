@@ -1,0 +1,17 @@
+INSTUPdfa
+C:\Users\labuser\workspace\LetsBuildACompiler\regex\dfa.py
+INFOS:&&1|1|1|0&&2|2|1|1&&3|3|1|4&&3|5|1|4&&3|6|1|4&&2|7|1|1&&2|8|1|1&&2|9|1|1&&2|10|1|1&&2|1|1|1&&3|11|1|0&&3|12|1|0&&3|5|1|0&&3|13|1|0&&3|14|1|0
+d=14
+edge=7
+accept=13
+n=11
+dfa.__init__=4
+is_final=10
+dfa=1
+__init__=2
+trans=12
+start=5
+nfa_accept=6
+combine=9
+closure=8
+nfa=3

@@ -1,0 +1,5 @@
+MODULES_MANAGER_V2
+dfa|C:\Users\labuser\workspace\LetsBuildACompiler\regex\dfa.py
+memoize|C:\Users\labuser\workspace\LetsBuildACompiler\regex\memoize.py
+nfa|C:\Users\labuser\workspace\LetsBuildACompiler\regex\nfa.py
+regex|C:\Users\labuser\workspace\LetsBuildACompiler\regex\regex.py
